@@ -135,7 +135,7 @@ async function persist() {
     flashSaved();
   } catch (e) {
     console.error(e);
-    alert("Erro ao salvar: " + (e.message || e));
+    showAlert({ title: "Erro ao salvar", message: e.message || String(e), icon: "⚠️" });
   }
 }
 
@@ -274,11 +274,11 @@ function renderAgenda(docs) {
 
     card.querySelector(".btn-pix").addEventListener("click", () => {
       if (!state.pixKey) {
-        alert("Cadastre a chave PIX na aba Configurações antes de enviar.");
+        showAlert({ title: "Chave PIX não cadastrada", message: "Cadastre a chave PIX na aba Configurações antes de enviar.", icon: "🔑" });
         return;
       }
       if (!telefone) {
-        alert("Este agendamento não possui telefone cadastrado.");
+        showAlert({ title: "Telefone ausente", message: "Este agendamento não possui telefone cadastrado.", icon: "📱" });
         return;
       }
       const partes = [
@@ -293,12 +293,19 @@ function renderAgenda(docs) {
     });
 
     card.querySelector(".btn-finish").addEventListener("click", async () => {
-      if (!confirm(`Finalizar o atendimento de ${nome}? O agendamento será removido e o horário liberado.`)) return;
+      const ok = await showConfirm({
+        title: "Finalizar atendimento",
+        message: `Deseja finalizar o atendimento de ${nome}?\nO agendamento será removido e o horário liberado.`,
+        icon: "✅",
+        confirmText: "Finalizar",
+        cancelText: "Cancelar",
+      });
+      if (!ok) return;
       try {
         await deleteDoc(doc(db, "agendamentos", d.id));
       } catch (e) {
         console.error(e);
-        alert("Erro ao finalizar: " + (e.message || e));
+        showAlert({ title: "Erro ao finalizar", message: e.message || String(e), icon: "⚠️" });
       }
     });
 
@@ -332,4 +339,56 @@ if (AGENDA_COL) {
 } else {
   agendaLoading.classList.add("hidden");
   agendaEmpty.classList.remove("hidden");
+}
+
+// ===== Modal helpers =====
+const modalEl = document.getElementById("modal");
+const modalTitleEl = document.getElementById("modal-title");
+const modalMsgEl = document.getElementById("modal-message");
+const modalIconEl = document.getElementById("modal-icon");
+const modalOkBtn = document.getElementById("modal-ok");
+const modalCancelBtn = document.getElementById("modal-cancel");
+let _modalResolver = null;
+
+function closeModal(result) {
+  modalEl.classList.add("hidden");
+  const r = _modalResolver; _modalResolver = null;
+  if (r) r(result);
+}
+modalOkBtn.addEventListener("click", () => closeModal(true));
+modalCancelBtn.addEventListener("click", () => closeModal(false));
+modalEl.addEventListener("click", (e) => { if (e.target === modalEl) closeModal(false); });
+document.addEventListener("keydown", (e) => {
+  if (modalEl.classList.contains("hidden")) return;
+  if (e.key === "Escape") closeModal(false);
+  if (e.key === "Enter") closeModal(true);
+});
+
+function showAlert({ title = "Aviso", message = "", icon = "ℹ️", okText = "OK" } = {}) {
+  return new Promise((resolve) => {
+    modalTitleEl.textContent = title;
+    modalMsgEl.textContent = message;
+    modalIconEl.textContent = icon;
+    modalOkBtn.textContent = okText;
+    modalOkBtn.className = "btn-gold";
+    modalCancelBtn.classList.add("hidden");
+    _modalResolver = resolve;
+    modalEl.classList.remove("hidden");
+    setTimeout(() => modalOkBtn.focus(), 30);
+  });
+}
+
+function showConfirm({ title = "Confirmar", message = "", icon = "❓", confirmText = "Confirmar", cancelText = "Cancelar", danger = false } = {}) {
+  return new Promise((resolve) => {
+    modalTitleEl.textContent = title;
+    modalMsgEl.textContent = message;
+    modalIconEl.textContent = icon;
+    modalOkBtn.textContent = confirmText;
+    modalOkBtn.className = danger ? "btn-danger" : "btn-gold";
+    modalCancelBtn.textContent = cancelText;
+    modalCancelBtn.classList.remove("hidden");
+    _modalResolver = resolve;
+    modalEl.classList.remove("hidden");
+    setTimeout(() => modalOkBtn.focus(), 30);
+  });
 }
