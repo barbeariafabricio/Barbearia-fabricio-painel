@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+  <title>Barbearia — Painel Interno</title>
+
+  <meta name="description" content="Painel interno da Barbearia. Controle status, preços, chave PIX, planos, taxas e agendamentos." />
+
+  <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="brand">
+      <div class="logo-card">
+        <p class="logo-title">BARBEARIA</p>
+        <div class="logo-divider"><span></span>✂<span></span></div>
+        <p class="logo-sub">Painel Interno</p>
+      </div>
+      <h1 id="page-title">Configurações</h1>
+    </header>
+
+    <!-- Sub-abas -->
+    <nav class="tabs" role="tablist">
+      <button id="tab-config" class="tab-btn active" role="tab" aria-selected="true">Configurações</button>
+      <button id="tab-agenda" class="tab-btn" role="tab" aria-selected="false">Agendamentos</button>
+    </nav>
+
+    <div id="config-warn" class="warn hidden disp">
+      ⚙️ Abra <code>firebase-config.js</code> e cole as credenciais do seu Firebase para ativar o painel.
+    </div>
+
+    <div id="loading" class="warn">⏳ Carregando configurações...</div>
+
+    <section id="panel" class="hidden">
+      <!-- Status do salão -->
+      <h2 class="section-title">STATUS DO SALÃO:</h2>
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <p class="toggle-name" id="open-name">Salão fechado</p>
+          <p class="toggle-desc" id="open-desc">Os clientes não conseguem agendar.</p>
+        </div>
+        <button id="toggle-open" class="switch" role="switch" aria-checked="false">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+
+      <!-- Intervalo do barbeiro -->
+      <h2 class="section-title marg_tp">INTERVALO DO BARBEIRO:</h2>
+      <div class="toggle-card">
+        <div class="toggle-info">
+          <p class="toggle-name" id="break-name">Trabalhando normalmente</p>
+          <p class="toggle-desc" id="break-desc">O barbeiro está disponível para atender.</p>
+        </div>
+        <button id="toggle-break" class="switch" role="switch" aria-checked="false">
+          <span class="switch-knob"></span>
+        </button>
+      </div>
+
+      <!-- Chave PIX -->
+      <h2 class="section-title marg_tp">CHAVE PIX:</h2>
+      <div class="field-card">
+        <label>Chave PIX exibida para o cliente
+          <input id="in-pix" type="text" placeholder="ex: 000.000.000-00 / e-mail / celular" />
+        </label>
+      </div>
+
+      <!-- Preços dos serviços -->
+      <h2 class="section-title marg_tp">VALOR DOS SERVIÇOS (R$):</h2>
+      <div class="field-card grid-2">
+        <label>Corte de cabelo<input id="price-corte" type="number" min="0" step="1" /></label>
+        <label>Barba<input id="price-barba" type="number" min="0" step="1" /></label>
+        <label>Barba + Corte<input id="price-barba_corte" type="number" min="0" step="1" /></label>
+        <label>Sobrancelha<input id="price-sobrancelha" type="number" min="0" step="1" /></label>
+      </div>
+
+      <!-- Planos mensais -->
+      <h2 class="section-title marg_tp">PLANOS MENSAIS (R$):</h2>
+      <div class="field-card grid-2">
+        <label>Plano Corte (4x/mês)<input id="plan-corte" type="number" min="0" step="1" /></label>
+        <label>Plano Corte + Barba<input id="plan-completo" type="number" min="0" step="1" /></label>
+      </div>
+
+      <!-- Taxa de deslocamento -->
+      <h2 class="section-title marg_tp">ATENDIMENTO EM DOMICÍLIO:</h2>
+      <div class="field-card">
+        <label>Taxa de deslocamento (R$)
+          <input id="in-taxa" type="number" min="0" step="1" placeholder="ex: 15" />
+        </label>
+        <p class="muted small">Cobrado a mais quando o cliente escolhe atendimento na casa.</p>
+      </div>
+
+      <button id="btn-save" class="btn-gold marg_tp">SALVAR ALTERAÇÕES</button>
+      <div id="save-status" class="save-status hidden">✓ Alterações salvas</div>
+    </section>
+
+    <!-- Aba de agendamentos -->
+    <section id="agenda" class="hidden">
+      <h2 class="section-title">CLIENTES AGENDADOS:</h2>
+      <div id="agenda-loading" class="warn">⏳ Carregando agendamentos...</div>
+      <div id="agenda-empty" class="warn hidden">Nenhum agendamento no momento.</div>
+      <div id="agenda-list"></div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
