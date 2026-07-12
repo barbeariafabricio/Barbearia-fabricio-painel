@@ -27,6 +27,10 @@ const state = {
   prices: { corte: 40, barba: 25, barba_corte: 55, sobrancelha: 15 },
   plans:  { corte: 120, completo: 180 },
   taxaDeslocamento: 0,
+  enderecoSalao: "",
+  emAtendimentoDomicilio: false,
+  atendimentoDomicilioNome: "",
+  atendimentoDomicilioAgId: "",
 };
 
 // Elementos
@@ -46,6 +50,7 @@ const breakDesc = document.getElementById("break-desc");
 
 const inPix   = document.getElementById("in-pix");
 const inTaxa  = document.getElementById("in-taxa");
+const inEndereco = document.getElementById("in-endereco");
 const pCorte  = document.getElementById("price-corte");
 const pBarba  = document.getElementById("price-barba");
 const pBC     = document.getElementById("price-barba_corte");
@@ -93,6 +98,7 @@ function renderToggles() {
 function renderFields() {
   inPix.value = state.pixKey || "";
   inTaxa.value = state.taxaDeslocamento ?? 0;
+  if (inEndereco) inEndereco.value = state.enderecoSalao || "";
   pCorte.value = state.prices.corte ?? 0;
   pBarba.value = state.prices.barba ?? 0;
   pBC.value    = state.prices.barba_corte ?? 0;
@@ -119,6 +125,10 @@ async function persist() {
       open: state.open,
       onBreak: state.onBreak,
       pixKey: state.pixKey || "",
+      enderecoSalao: state.enderecoSalao || "",
+      emAtendimentoDomicilio: !!state.emAtendimentoDomicilio,
+      atendimentoDomicilioNome: state.atendimentoDomicilioNome || "",
+      atendimentoDomicilioAgId: state.atendimentoDomicilioAgId || "",
       prices: {
         corte: num(state.prices.corte),
         barba: num(state.prices.barba),
@@ -147,6 +157,7 @@ toggleBreak.addEventListener("click", () => { state.onBreak = !state.onBreak; re
 document.getElementById("btn-save").addEventListener("click", () => {
   state.pixKey = inPix.value.trim();
   state.taxaDeslocamento = num(inTaxa.value);
+  if (inEndereco) state.enderecoSalao = inEndereco.value.trim();
   state.prices = {
     corte: num(pCorte.value),
     barba: num(pBarba.value),
@@ -173,6 +184,10 @@ if (CONFIG_REF) {
       state.prices = { ...state.prices, ...(d.prices || {}) };
       state.plans  = { ...state.plans,  ...(d.plans  || {}) };
       state.taxaDeslocamento = d.taxaDeslocamento ?? 0;
+      state.enderecoSalao = d.enderecoSalao || "";
+      state.emAtendimentoDomicilio = !!d.emAtendimentoDomicilio;
+      state.atendimentoDomicilioNome = d.atendimentoDomicilioNome || "";
+      state.atendimentoDomicilioAgId = d.atendimentoDomicilioAgId || "";
     }
     render();
   }, (err) => {
@@ -250,8 +265,24 @@ function renderAgenda(docs) {
     const servico = serviceLabel(servicoRaw);
     const dataAg = pickField(data, ["data", "dia", "date"]);
     const hora = pickField(data, ["hora", "horario", "horário", "time"]);
-    const local = pickField(data, ["local", "endereco", "endereço", "modalidade"]);
+    const local = pickField(data, ["local", "location", "modalidade"]);
+    const endereco = pickField(data, ["endereco", "endereço", "address"]);
     const dataFmt = formatDate(dataAg);
+
+    // Detecta se é atendimento em domicílio
+    const isCasa = String(local || "").toLowerCase().includes("casa") ||
+                   String(local || "").toLowerCase() === "domicilio" ||
+                   String(local || "").toLowerCase() === "domicílio" ||
+                   !!endereco;
+
+    // Está sendo atendido agora?
+    const isAtendendoEste = state.emAtendimentoDomicilio &&
+                            state.atendimentoDomicilioNome === nome &&
+                            state.atendimentoDomicilioAgId === d.id;
+
+    const localTxt = isCasa
+      ? (endereco ? `🏠 ${endereco}` : "🏠 Atendimento em domicílio")
+      : (local ? `📍 ${local}` : "🏪 No salão");
 
     const card = document.createElement("div");
     card.className = "agenda-card";
@@ -264,9 +295,11 @@ function renderAgenda(docs) {
         ${dataFmt ? `<span>📅 ${escapeHtml(dataFmt)}</span>` : ""}
         ${hora ? `<span>⏰ ${escapeHtml(String(hora))}</span>` : ""}
         ${telefone ? `<span>📱 ${escapeHtml(String(telefone))}</span>` : ""}
-        ${local ? `<span>📍 ${escapeHtml(String(local))}</span>` : ""}
+        <span>${escapeHtml(localTxt)}</span>
+        ${isAtendendoEste ? `<span class="agenda-badge" style="background:rgba(212,162,74,.18);color:var(--gold)">🛵 Em atendimento agora</span>` : ""}
       </div>
       <div class="agenda-actions">
+        ${isCasa ? `<button class="btn-gold btn-atender">${isAtendendoEste ? "Encerrar deslocamento" : "Atender (em domicílio)"}</button>` : ""}
         <button class="btn-gold btn-pix">Enviar chave PIX</button>
         <button class="btn-danger btn-finish">Finalizar atendimento</button>
       </div>
@@ -292,6 +325,32 @@ function renderAgenda(docs) {
       if (url) window.open(url, "_blank");
     });
 
+    const btnAtender = card.querySelector(".btn-atender");
+    if (btnAtender) {
+      btnAtender.addEventListener("click", async () => {
+        if (isAtendendoEste) {
+          // Encerrar aviso de deslocamento (mas mantém o agendamento)
+          state.emAtendimentoDomicilio = false;
+          state.atendimentoDomicilioNome = "";
+          state.atendimentoDomicilioAgId = "";
+          await persist();
+          return;
+        }
+        const ok = await showConfirm({
+          title: "Atender em domicílio",
+          message: `Iniciar o deslocamento para atender ${nome}?\nO cliente do próximo horário será avisado de que o barbeiro está em atendimento domiciliar.`,
+          icon: "🛵",
+          confirmText: "Sim, estou saindo",
+          cancelText: "Cancelar",
+        });
+        if (!ok) return;
+        state.emAtendimentoDomicilio = true;
+        state.atendimentoDomicilioNome = nome;
+        state.atendimentoDomicilioAgId = d.id;
+        await persist();
+      });
+    }
+
     card.querySelector(".btn-finish").addEventListener("click", async () => {
       const ok = await showConfirm({
         title: "Finalizar atendimento",
@@ -303,6 +362,13 @@ function renderAgenda(docs) {
       if (!ok) return;
       try {
         await deleteDoc(doc(db, "agendamentos", d.id));
+        // Se este era o atendimento em domicílio em andamento, limpa o aviso
+        if (isAtendendoEste) {
+          state.emAtendimentoDomicilio = false;
+          state.atendimentoDomicilioNome = "";
+          state.atendimentoDomicilioAgId = "";
+          await persist();
+        }
       } catch (e) {
         console.error(e);
         showAlert({ title: "Erro ao finalizar", message: e.message || String(e), icon: "⚠️" });
