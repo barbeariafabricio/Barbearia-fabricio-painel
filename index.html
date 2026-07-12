@@ -111,8 +111,18 @@
     </section>
   </main>
 
-  <!-- modal -->
-  <div id="modal"></div>
+  <!-- Modal reutilizável -->
+  <div id="modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-icon" id="modal-icon">ℹ️</div>
+      <h3 id="modal-title" class="modal-title">Aviso</h3>
+      <p id="modal-message" class="modal-message"></p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-ghost hidden">Cancelar</button>
+        <button id="modal-ok" class="btn-gold">OK</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="app.js"></script>
 </body>
