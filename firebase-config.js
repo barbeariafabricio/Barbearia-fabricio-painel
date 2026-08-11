@@ -2,8 +2,8 @@
 // Console: https://console.firebase.google.com > Configurações do projeto > Seus apps (Web)
 // Estas chaves são públicas por design — proteja com Regras do Firestore.
 // Configurações do projeto Firebase Real
-const firebaseConfig = {
-  apiKey: "AIzaSyBeGZ6kXjS21k2WVHlkzDNnsStVT9IiSuU",
+export const firebaseConfig = {
+  apiKey: "SUA_CHAVE",
   authDomain: "barbearias-40070.firebaseapp.com",
   databaseURL: "https://barbearias-40070-default-rtdb.firebaseio.com",
   projectId: "barbearias-40070",
