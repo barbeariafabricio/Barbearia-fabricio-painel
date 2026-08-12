@@ -15,14 +15,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=2" />
 </head>
 <body>
   <main class="container">
     <header class="brand">
       <div class="logo-card">
         <p class="logo-title">BARBEARIA</p>
-        <div class="logo-divider"><span></span>✂<span></span></div>
+        <div class="logo-divider"><span></span><img class="divider-ico" src="icons/00.png" alt="" /><span></span></div>
         <p class="logo-sub">Painel Interno</p>
       </div>
       <h1 id="page-title">Configurações</h1>
@@ -42,7 +42,7 @@
 
     <section id="panel" class="hidden">
       <!-- Status do salão -->
-      <h2 class="section-title">STATUS DO SALÃO:</h2>
+      <h2 class="section-title"><img src="icons/11.png" alt="" />STATUS DO SALÃO:</h2>
       <div class="toggle-card">
         <div class="toggle-info">
           <p class="toggle-name" id="open-name">Salão fechado</p>
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Intervalo do barbeiro -->
-      <h2 class="section-title marg_tp">INTERVALO DO BARBEIRO:</h2>
+      <h2 class="section-title marg_tp"><img src="icons/08.png" alt="" />INTERVALO DO BARBEIRO:</h2>
       <div class="toggle-card">
         <div class="toggle-info">
           <p class="toggle-name" id="break-name">Trabalhando normalmente</p>
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Chave PIX -->
-      <h2 class="section-title marg_tp">CHAVE PIX:</h2>
+      <h2 class="section-title marg_tp"><img src="icons/09.png" alt="" />CHAVE PIX:</h2>
       <div class="field-card">
         <label>Chave PIX exibida para o cliente
           <input id="in-pix" type="text" placeholder="ex: 000.000.000-00 / e-mail / celular" />
@@ -74,23 +74,26 @@
       </div>
 
       <!-- Preços dos serviços -->
-      <h2 class="section-title marg_tp">VALOR DOS SERVIÇOS (R$):</h2>
+      <h2 class="section-title marg_tp"><img src="icons/15.png" alt="" />VALOR DOS SERVIÇOS (R$):</h2>
       <div class="field-card grid-2">
-        <label>Corte de cabelo<input id="price-corte" type="number" min="0" step="1" /></label>
+        <label>Corte social<input id="price-corte" type="number" min="0" step="1" /></label>
         <label>Barba<input id="price-barba" type="number" min="0" step="1" /></label>
-        <label>Barba + Corte<input id="price-barba_corte" type="number" min="0" step="1" /></label>
+        <label>Degradê<input id="price-degrade" type="number" min="0" step="1" /></label>
         <label>Sobrancelha<input id="price-sobrancelha" type="number" min="0" step="1" /></label>
+        <label>Barba + Corte<input id="price-barba_corte" type="number" min="0" step="1" /></label>
+        <label>Corte infantil<input id="price-corte_infantil" type="number" min="0" step="1" /></label>
+        <label>Corte infantil degradê<input id="price-corte_infantil_degrade" type="number" min="0" step="1" /></label>
       </div>
 
       <!-- Planos mensais -->
-      <h2 class="section-title marg_tp">PLANOS MENSAIS (R$):</h2>
+      <h2 class="section-title marg_tp"><img src="icons/11.png" alt="" />PLANOS MENSAIS (R$):</h2>
       <div class="field-card grid-2">
         <label>Plano Corte (4x/mês)<input id="plan-corte" type="number" min="0" step="1" /></label>
         <label>Plano Corte + Barba<input id="plan-completo" type="number" min="0" step="1" /></label>
       </div>
 
       <!-- Taxa de deslocamento -->
-      <h2 class="section-title marg_tp">ATENDIMENTO EM DOMICÍLIO:</h2>
+      <h2 class="section-title marg_tp"><img src="icons/14.png" alt="" />ATENDIMENTO EM DOMICÍLIO:</h2>
       <div class="field-card">
         <label>Taxa de deslocamento (R$)
           <input id="in-taxa" type="number" min="0" step="1" placeholder="ex: 15" />
@@ -99,7 +102,7 @@
       </div>
 
       <!-- Endereço do salão (para botão Google Maps no painel externo) -->
-      <h2 class="section-title marg_tp">ENDEREÇO DO SALÃO:</h2>
+      <h2 class="section-title marg_tp"><img src="icons/12.png" alt="" />ENDEREÇO DO SALÃO:</h2>
       <div class="field-card">
         <label>Endereço exibido no botão do Google Maps
           <input id="in-endereco" type="text" placeholder="ex: Rua das Flores, 123 - Centro, Cidade/UF" />
@@ -113,7 +116,7 @@
 
     <!-- Aba de agendamentos -->
     <section id="agenda" class="hidden">
-      <h2 class="section-title">CLIENTES AGENDADOS:</h2>
+      <h2 class="section-title"><img src="icons/16.png" alt="" />CLIENTES AGENDADOS:</h2>
       <div id="agenda-loading" class="warn">⏳ Carregando agendamentos...</div>
       <div id="agenda-empty" class="warn hidden">Nenhum agendamento no momento.</div>
       <div id="agenda-list"></div>
@@ -133,6 +136,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=2"></script>
 </body>
 </html>

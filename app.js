@@ -24,8 +24,11 @@ const state = {
   open: false,
   onBreak: false,
   pixKey: "",
-  prices: { corte: 40, barba: 25, barba_corte: 55, sobrancelha: 15 },
-  plans:  { corte: 120, completo: 180 },
+  prices: {
+    corte: 20, barba: 20, degrade: 20, sobrancelha: 5,
+    barba_corte: 40, corte_infantil: 25, corte_infantil_degrade: 30,
+  },
+  plans:  { corte: 60, completo: 240 },
   taxaDeslocamento: 0,
   enderecoSalao: "",
   emAtendimentoDomicilio: false,
@@ -51,10 +54,12 @@ const breakDesc = document.getElementById("break-desc");
 const inPix   = document.getElementById("in-pix");
 const inTaxa  = document.getElementById("in-taxa");
 const inEndereco = document.getElementById("in-endereco");
-const pCorte  = document.getElementById("price-corte");
-const pBarba  = document.getElementById("price-barba");
-const pBC     = document.getElementById("price-barba_corte");
-const pSobr   = document.getElementById("price-sobrancelha");
+const PRICE_IDS = [
+  "corte", "barba", "degrade", "sobrancelha",
+  "barba_corte", "corte_infantil", "corte_infantil_degrade",
+];
+const priceInputs = {};
+PRICE_IDS.forEach((id) => { priceInputs[id] = document.getElementById("price-" + id); });
 const planC   = document.getElementById("plan-corte");
 const planF   = document.getElementById("plan-completo");
 
@@ -99,10 +104,9 @@ function renderFields() {
   inPix.value = state.pixKey || "";
   inTaxa.value = state.taxaDeslocamento ?? 0;
   if (inEndereco) inEndereco.value = state.enderecoSalao || "";
-  pCorte.value = state.prices.corte ?? 0;
-  pBarba.value = state.prices.barba ?? 0;
-  pBC.value    = state.prices.barba_corte ?? 0;
-  pSobr.value  = state.prices.sobrancelha ?? 0;
+  PRICE_IDS.forEach((id) => {
+    if (priceInputs[id]) priceInputs[id].value = state.prices[id] ?? 0;
+  });
   planC.value  = state.plans.corte ?? 0;
   planF.value  = state.plans.completo ?? 0;
 }
@@ -129,12 +133,11 @@ async function persist() {
       emAtendimentoDomicilio: !!state.emAtendimentoDomicilio,
       atendimentoDomicilioNome: state.atendimentoDomicilioNome || "",
       atendimentoDomicilioAgId: state.atendimentoDomicilioAgId || "",
-      prices: {
-        corte: num(state.prices.corte),
-        barba: num(state.prices.barba),
-        barba_corte: num(state.prices.barba_corte),
-        sobrancelha: num(state.prices.sobrancelha),
-      },
+      // Salvar sobrescreve os valores no banco (inclui os serviços novos)
+      prices: PRICE_IDS.reduce((acc, id) => {
+        acc[id] = num(state.prices[id]);
+        return acc;
+      }, {}),
       plans: {
         corte: num(state.plans.corte),
         completo: num(state.plans.completo),
@@ -158,12 +161,10 @@ document.getElementById("btn-save").addEventListener("click", () => {
   state.pixKey = inPix.value.trim();
   state.taxaDeslocamento = num(inTaxa.value);
   if (inEndereco) state.enderecoSalao = inEndereco.value.trim();
-  state.prices = {
-    corte: num(pCorte.value),
-    barba: num(pBarba.value),
-    barba_corte: num(pBC.value),
-    sobrancelha: num(pSobr.value),
-  };
+  state.prices = PRICE_IDS.reduce((acc, id) => {
+    acc[id] = priceInputs[id] ? num(priceInputs[id].value) : num(state.prices[id]);
+    return acc;
+  }, {});
   state.plans = {
     corte: num(planC.value),
     completo: num(planF.value),
@@ -203,16 +204,32 @@ if (CONFIG_REF) {
 // ============ AGENDAMENTOS ============
 
 const SERVICE_LABELS = {
-  corte: "Corte de cabelo",
+  corte: "Corte social",
+  corte_de_cabelo: "Corte social",
+  corte_social: "Corte social",
   barba: "Barba",
+  degrade: "Degradê",
   barba_corte: "Barba + Corte",
   sobrancelha: "Sobrancelha",
+  corte_infantil: "Corte infantil",
+  corte_infantil_degrade: "Corte infantil degradê",
 };
 
 function serviceLabel(s) {
   if (!s) return "Serviço";
-  const key = String(s).toLowerCase().replace(/\s|\+/g, "_").replace(/__+/g, "_");
+  const key = String(s).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s|\+/g, "_").replace(/__+/g, "_");
   return SERVICE_LABELS[key] || String(s);
+}
+
+// Suporta agendamentos com múltiplos serviços
+function servicesLabels(data) {
+  const arr = data.services || data.servicos || data.servicesNames;
+  if (Array.isArray(arr) && arr.length) return arr.map(serviceLabel);
+  const raw = pickField(data, ["servico", "serviço", "service", "tipo", "serviceName"]);
+  if (!raw) return [];
+  return String(raw).split(/\s*\+\s*(?=[A-Za-zÀ-ÿ])/).map(serviceLabel);
 }
 
 function pickField(d, keys) {
@@ -261,8 +278,8 @@ function renderAgenda(docs) {
     const data = d.data;
     const nome = pickField(data, ["nome", "cliente", "name", "clientName"]) || "Cliente";
     const telefone = pickField(data, ["telefone", "whatsapp", "phone", "celular"]);
-    const servicoRaw = pickField(data, ["servico", "serviço", "service", "tipo"]);
-    const servico = serviceLabel(servicoRaw);
+    const servicosList = servicesLabels(data);
+    const servico = servicosList.length ? servicosList.join(" + ") : "Serviço";
     const dataAg = pickField(data, ["data", "dia", "date"]);
     const hora = pickField(data, ["hora", "horario", "horário", "time"]);
     const local = pickField(data, ["local", "location", "modalidade"]);
@@ -289,7 +306,10 @@ function renderAgenda(docs) {
     card.innerHTML = `
       <div class="agenda-head">
         <p class="agenda-name">${escapeHtml(nome)}</p>
-        <span class="agenda-badge">${escapeHtml(servico)}</span>
+        <span class="agenda-services">${
+          (servicosList.length ? servicosList : ["Serviço"])
+            .map((s) => `<span class="agenda-badge">${escapeHtml(s)}</span>`).join("")
+        }</span>
       </div>
       <div class="agenda-meta">
         ${dataFmt ? `<span>📅 ${escapeHtml(dataFmt)}</span>` : ""}
